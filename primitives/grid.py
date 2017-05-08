@@ -54,6 +54,12 @@ class Grid(yaml.YAMLObject):
 
 
 	@classmethod
+	def from_file(cls, filename):
+		with open(filename, mode='r') as f:
+			return yaml.load(f)
+
+
+	@classmethod
 	def to_yaml(cls, dumper, data):
 		""" Serializes grid parameters to yaml for output to file
 			
@@ -102,6 +108,10 @@ class Grid(yaml.YAMLObject):
 		return np.mgrid[xMin:xMax:(self._xCellCount * 1j),
 						yMin:yMax:(self._yCellCount * 1j)]
 
+
+	@property
+	def mgrid(self):
+		return self.generateGrid()
 
 	@property
 	def size(self):
