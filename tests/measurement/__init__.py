@@ -1,1 +1,1 @@
-from .. import primitives
+from context import primitives
