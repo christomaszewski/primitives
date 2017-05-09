@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import yaml
 
 class Grid(yaml.YAMLObject):
@@ -81,6 +80,9 @@ class Grid(yaml.YAMLObject):
 		origin = (dict_rep['xOrigin'], dict_rep['yOrigin'])
 		return cls(*params, origin=origin)
 
+	def save(self, filename):
+		with open(filename, 'w') as f:
+			yaml.dump(self, f)
 
 	def bin(self, point):
 		""" Return indices of cell the point falls into
@@ -91,8 +93,8 @@ class Grid(yaml.YAMLObject):
 		xRelative = x - self._xOrigin
 		yRelative = y - self._yOrigin
 
-		xBin = int(math.floor(xRelative / self._xCellWidth))
-		yBin = int(math.floor(yRelative / self._yCellWidth))
+		xBin = int(np.floor(xRelative / self._xCellWidth))
+		yBin = int(np.floor(yRelative / self._yCellWidth))
 
 		return (xBin, yBin)
 

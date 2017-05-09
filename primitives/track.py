@@ -37,6 +37,26 @@ class Track(yaml.YAMLObject):
 		else:
 			self._state = TrackState.EMPTY
 
+	@classmethod
+	def from_file(cls, filename):
+		with open(filename, mode='r') as f:
+			return yaml.load(f)
+
+
+	@classmethod
+	def to_yaml(cls, dumper, data):
+		""" Serializes track  to yaml for output to file
+			
+		"""
+		dict_rep = {'_positions':data._positions, '_times':data._times, '_state':data._state}
+
+		node = dumper.represent_mapping(cls.yaml_tag, dict_rep)
+		return node
+
+	def save(self, filename):
+		with open(filename, 'w') as f:
+			yaml.dump(self, f)
+
 	def __getitem__(self, index):
 		""" Overrides [] operator to return the observation at index
 
@@ -133,6 +153,7 @@ class Track(yaml.YAMLObject):
 		""" Deprecated alias for measure velocity function
 
 		"""
+		print("Deprecated Function Called")
 		return self.measureVelocity(method, scoring)
 
 	# Method Functions

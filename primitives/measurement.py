@@ -28,6 +28,10 @@ class Measurement(yaml.YAMLObject):
 		node = dumper.represent_mapping(cls.yaml_tag, dict_rep)
 		return node
 
+	def save(self, filename):
+		with open(filename, 'w') as f:
+			yaml.dump(self, f)
+
 	@property
 	def point(self):
 		return self._point
@@ -38,11 +42,7 @@ class Measurement(yaml.YAMLObject):
 	
 	@property
 	def score(self):
-		return self._score
-
-	def __cmp__(self, other):
-		# Negative so we can use minheap as maxheap
-		return -(cmp(self.score, other.score))
+		return -self._score
 
 	def __lt__(self, other):
 		return self.score < other.score
