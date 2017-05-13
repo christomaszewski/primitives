@@ -16,26 +16,38 @@ class Track(yaml.YAMLObject):
 	""" Represents a single particle/point on an object tracked over some 
 		period of time. Can be used to produce vector field measurements
 
-		self._positions holds particle locations in 2-Space
+		self._positions holds particle locations in list of numpy arrays
 		self._times holds the times the particle was seen at the location
 
 	"""
 
 	yaml_tag = '!Track'
 
-	def __init__(self, position=None, time=None):
+	def __init__(self, positions=None, times=None):
 		self._positions = []
 		self._times = []
 
-		if (position is not None):
+		if (positions is not None):
 			self._state = TrackState.ACTIVE
-			self._positions.append(position)
-			if (time is None):
-				self._times.append(time.time())
+			self._positions.extend(positions)
+			if (times is None):
+				self._times.extend(list(time.time())*len(positions))
 			else:
-				self._times.append(time)
+				self._times.extend(times)
 		else:
 			self._state = TrackState.EMPTY
+
+		self._lastKeyPoint = None
+
+	@classmethod
+	def from_point(cls, point, time):
+		return cls([point], [time])
+
+	@classmethod
+	def from_key_point(cls, keyPoint, time):
+		t = cls([np.squeeze(keyPoint.point)], [time])
+		t._lastKeyPoint = keyPoint
+		return t
 
 	@classmethod
 	def from_file(cls, filename):
@@ -61,7 +73,7 @@ class Track(yaml.YAMLObject):
 		""" Overrides [] operator to return the observation at index
 
 			Returns observation:
-			(time, position) where position is (x,y) tuple
+			(time, position) where position is np.array([x,y])
 
 		"""
 		if (index >= len(self._positions) or len(self._positions < 1)):
@@ -70,9 +82,21 @@ class Track(yaml.YAMLObject):
 
 		return (self._times[index], self._positions[index])
 
+	def addKeyPointObservation(self, keyPoint, time=None):
+		if (time is None):
+			time = time.time()
+
+		self._positions.append(np.squeeze(keyPoint.point))
+		self._times.append(time)
+
+		self._lastKeyPoint = keyPoint
+
 	def addObservation(self, position, time=None):
 		if (time is None):
 			time = time.time()
+
+		if (position.ndim < 1):
+			print("error, inserting scalar:", position)
 
 		self._positions.append(position)
 		self._times.append(time)
@@ -188,7 +212,9 @@ class Track(yaml.YAMLObject):
 
 		start = self._positions[0]
 		end = self._positions[-1]
-		diff = (end[0] - start[0], end[1] - start[1])
+
+		diff = end - start
+		#(end[0] - start[0], end[1] - start[1])
 
 		return np.linalg.norm(diff)
 
@@ -206,6 +232,9 @@ class Track(yaml.YAMLObject):
 		if (len(self._positions) < 1):
 			return None
 
+		if (self._positions[-1].ndim < 1):
+			print("point dim wrong", self._positions[-1], self._positions[-1].shape)
+
 		return self._positions[-1]
 
 	@property
@@ -216,6 +245,10 @@ class Track(yaml.YAMLObject):
 		return self._times[-1]
 
 	@property
+	def lastKeyPoint(self):
+		return self._lastKeyPoint
+
+	@property
 	def score(self):
 		# Negative to use min heap as max heap
 		return -self._composite()
@@ -223,6 +256,10 @@ class Track(yaml.YAMLObject):
 	@property
 	def positions(self):
 		return self._positions
+
+	@positions.setter
+	def positions(self, positions):
+		self._positions = positions
 
 	@property
 	def times(self):
@@ -234,7 +271,7 @@ class Track(yaml.YAMLObject):
 
 	@property
 	def avgSpeed(self):
-		
+		# Takes long to compute !!!
 		prevPoint = None
 		prevTime = None
 
@@ -242,6 +279,7 @@ class Track(yaml.YAMLObject):
 
 		for (point, time) in zip(self._positions, self._times):
 			if prevPoint is not None and prevTime is not None:
+				diff = point - prevPoint
 				diff = (point[0] - prevPoint[0], point[1] - prevPoint[1])
 				dist = np.linalg.norm(diff)
 
