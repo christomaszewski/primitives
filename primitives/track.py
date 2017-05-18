@@ -124,7 +124,7 @@ class Track(yaml.YAMLObject):
 	def length(self):
 		return self._displacement()
 
-	def measureVelocity(self, method='midpoint', scoring='time'):
+	def measureVelocity(self, minDist=0.0, method='midpoint', scoring='time'):
 		""" Returns list of measurements representing velocity of particle
 			localizing the measurement using the method specified. Velocity
 			is computed by comparing pairs on consecutive points.
@@ -158,10 +158,15 @@ class Track(yaml.YAMLObject):
 			if prevPoint is not None:
 				deltaT = timestamp - prevTime
 				#print(point, prevPoint)
+				diff = point - prevPoint
+
+				if (np.linalg.norm(diff) < minDist):
+					# points not far enough apart on track
+					continue
 
 				xVel = (point[0] - prevPoint[0]) / deltaT
 				yVel = (point[1] - prevPoint[1]) / deltaT
-				vel = (xVel, yVel)
+				vel = tuple(diff/deltaT)
 
 				measurementPoint = methodFunc(prevPoint, point)
 
@@ -268,6 +273,10 @@ class Track(yaml.YAMLObject):
 	@property
 	def state(self):
 		return self._state
+
+	@property
+	def avgSpeedFast(self):
+		return self._displacement()/self.age()
 
 	@property
 	def avgSpeed(self):

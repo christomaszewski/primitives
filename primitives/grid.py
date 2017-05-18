@@ -112,6 +112,16 @@ class Grid(yaml.YAMLObject):
 
 
 	@property
+	def dim(self):
+		return (self._xCellCount, self._yCellCount)
+
+	@property
+	def edges(self):
+		xEdges = np.arange(self._xOrigin, self._xOrigin + self._xDist + 1, self._xCellWidth)
+		yEdges = np.arange(self._yOrigin, self._yOrigin + self._yDist + 1, self._yCellWidth)
+		return [xEdges, yEdges]
+
+	@property
 	def mgrid(self):
 		return self.generateGrid()
 
