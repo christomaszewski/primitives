@@ -41,7 +41,8 @@ class Track(yaml.YAMLObject):
 
 	@classmethod
 	def from_point(cls, point, time):
-		return cls([point], [time])
+		numpyPoint = np.asarray(point)
+		return cls([numpyPoint], [time])
 
 	@classmethod
 	def from_key_point(cls, keyPoint, time):
@@ -54,13 +55,20 @@ class Track(yaml.YAMLObject):
 		with open(filename, mode='r') as f:
 			return yaml.load(f)
 
+	@classmethod
+	def from_yaml(cls, loader, node):
+		dict_rep = loader.construct_mapping(node, deep=True)
+		positions = [np.asarray(p) for p in dict_rep['positions']]
+		times = dict_rep['times']
+		return cls(positions, times)
 
 	@classmethod
 	def to_yaml(cls, dumper, data):
 		""" Serializes track  to yaml for output to file
 			
 		"""
-		dict_rep = {'_positions':data._positions, '_times':data._times, '_state':data._state}
+		positions = np.asarray(data._positions).tolist()
+		dict_rep = {'positions':positions, 'times':data._times, 'state':data._state}
 
 		node = dumper.represent_mapping(cls.yaml_tag, dict_rep)
 		return node
@@ -94,6 +102,8 @@ class Track(yaml.YAMLObject):
 	def addObservation(self, position, time=None):
 		if (time is None):
 			time = time.time()
+
+		position = np.asarray(position)
 
 		if (position.ndim < 1):
 			print("error, inserting scalar:", position)

@@ -1,4 +1,5 @@
 from unittest import TestCase
+import numpy as np
 
 import heapq
 
@@ -44,12 +45,12 @@ class TrackTest(TestCase):
 
 		# Check lastSeen and endPoint refer to point and time
 		self.assertEqual(t.lastSeen, time)
-		self.assertEqual(t.endPoint, point) 
+		self.assertEqual(tuple(t.endPoint), point) 
 
 
 	def test_measurement_construction(self):
 		# Initialize track at origin
-		t = Track((0.0,0.0), 0.0)
+		t = Track.from_point(np.asarray((0.0,0.0)), 0.0)
 
 		# Check that state has been initialized to active
 		self.assertEqual(t.state, TrackState.ACTIVE)
@@ -76,11 +77,39 @@ class TrackTest(TestCase):
 		self.assertAlmostEqual(lastDispM.point[1], 3.0)
 
 		# Check measurement scoring
-		self.assertAlmostEqual(midpointTimeM.score, time)
-		self.assertAlmostEqual(firstLengthM.score, 2)
-		self.assertAlmostEqual(lastDispM.score, 5.83095189485)
+		self.assertAlmostEqual(-midpointTimeM.score, time)
+		self.assertAlmostEqual(-firstLengthM.score, 2)
+		self.assertAlmostEqual(-lastDispM.score, 5.83095189485)
 		#self.assertAlmostEqual(midpointCompositeM.score, 2.38309518948)
 
 		# Check computed velocity value
 		self.assertAlmostEqual(midpointTimeM.value[0], 2.5)
 		self.assertAlmostEqual(midpointTimeM.value[1], 1.5)
+
+	def test_track_save(self):
+		origin = (0,0)
+		# Initialize track at origin
+		t = Track.from_point(origin, 0.0)
+
+		# Check that state has been initialized to active
+		self.assertEqual(t.state, TrackState.ACTIVE)
+
+		# Add a second point to the track
+		point = (5.0, 3.0)
+		time = 2.0
+		t.addObservation(point, time)
+
+		t.save('test.yaml')
+
+		newTrack = Track.from_file('test.yaml')
+
+		print(newTrack.positions, newTrack.times, newTrack.score)
+
+		self.assertEqual(t.score, newTrack.score)
+		self.assertEqual(t.state, newTrack.state)
+		self.assertEqual(t.age(), newTrack.age())
+		self.assertEqual(t.length(), newTrack.length())
+
+		endPoint = tuple(newTrack.endPoint)
+		self.assertEqual(point, endPoint)
+
