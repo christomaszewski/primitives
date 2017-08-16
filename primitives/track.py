@@ -60,6 +60,7 @@ class Track(yaml.YAMLObject):
 		dict_rep = loader.construct_mapping(node, deep=True)
 		positions = [np.asarray(p) for p in dict_rep['positions']]
 		times = dict_rep['times']
+		state = TrackState[dict_rep['state']]
 		return cls(positions, times)
 
 	@classmethod
@@ -68,7 +69,7 @@ class Track(yaml.YAMLObject):
 			
 		"""
 		positions = np.asarray(data._positions).tolist()
-		dict_rep = {'positions':positions, 'times':data._times, 'state':data._state}
+		dict_rep = {'positions':positions, 'times':data._times, 'state':data._state.name}
 
 		node = dumper.represent_mapping(cls.yaml_tag, dict_rep)
 		return node
