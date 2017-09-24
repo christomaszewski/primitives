@@ -6,11 +6,18 @@ class Measurement(yaml.YAMLObject):
 	"""
 
 	yaml_tag = '!Measurement'
+	new_id = 0
 
-	def __init__(self, point, value, score=0.0):
+	def __init__(self, point, value, score=0.0, idNum=None):
 		self._point = point
 		self._value = value
 		self._score = score
+
+		if (idNum is None):
+			self._id = Measurement.new_id
+			Measurement.new_id += 1
+		else:
+			self._id = idNum
 
 	@classmethod
 	def from_file(cls, filename):
@@ -43,6 +50,10 @@ class Measurement(yaml.YAMLObject):
 	@property
 	def score(self):
 		return -self._score
+
+	@property
+	def id(self):
+		return self._id
 
 	def __lt__(self, other):
 		return self.score < other.score
